@@ -41,7 +41,7 @@ def scheduler(epoch):
     if epoch < 160:
         return 0.004
     return 0.0008
-
+#归一化
 def color_preprocessing(x_train,x_test):
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
@@ -52,29 +52,29 @@ def color_preprocessing(x_train,x_test):
         x_test[:,:,:,i] = (x_test[:,:,:,i] - mean[i]) / std[i]
 
     return x_train, x_test
-
+#定义宽的residual 网络
 def wide_residual_network(img_input,classes_num,depth,k):
     print('Wide-Resnet %dx%d' %(depth, k))
     n_filters  = [16, 16*k, 32*k, 64*k]
     n_stack    = (depth - 4) // 6
-
+    #定义3*3卷积
     def conv3x3(x,filters):
         return Conv2D(filters=filters, kernel_size=(3,3), strides=(1,1), padding='same',
         kernel_initializer='he_normal',
         kernel_regularizer=l2(WEIGHT_DECAY),
         use_bias=False)(x)
-
+    #定义bn+relu
     def bn_relu(x):
         x = BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
         x = Activation('relu')(x)
         return x
-
+    #定义一个residual 模块
     def residual_block(x,out_filters,increase=False):
         global IN_FILTERS
         stride = (1,1)
         if increase:
             stride = (2,2)
-            
+        #首先就将数据做了bn和relu
         o1 = bn_relu(x)
         
         conv_1 = Conv2D(out_filters,
@@ -90,6 +90,7 @@ def wide_residual_network(img_input,classes_num,depth,k):
             kernel_initializer='he_normal',
             kernel_regularizer=l2(WEIGHT_DECAY),
             use_bias=False)(o2)
+        #如果要调整维度
         if increase or IN_FILTERS != out_filters:
             proj = Conv2D(out_filters,
                                 kernel_size=(1,1),strides=stride,padding='same',
@@ -100,12 +101,12 @@ def wide_residual_network(img_input,classes_num,depth,k):
         else:
             block = add([conv_2,x])
         return block
-
+    #定义宽 residual层
     def wide_residual_layer(x,out_filters,increase=False):
         global IN_FILTERS
         x = residual_block(x,out_filters,increase)
         IN_FILTERS = out_filters
-        for _ in range(1,int(n_stack)):
+        for _ in range(1,int(n_stack)):  #堆叠residual block，
             x = residual_block(x,out_filters)
         return x
 
