@@ -25,8 +25,8 @@ if('tensorflow' == K.backend()):
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    
 
+#数据预处理，执行按channel的批归一化操作
 def color_preprocessing(x_train,x_test):
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
@@ -37,7 +37,7 @@ def color_preprocessing(x_train,x_test):
         x_test[:,:,:,i] = (x_test[:,:,:,i] - mean[i]) / std[i]
 
     return x_train, x_test
-
+#经验，学习率调整方法
 def scheduler(epoch):
     if epoch <= 60:
         return 0.05
@@ -46,10 +46,11 @@ def scheduler(epoch):
     if epoch <= 160:    
         return 0.002
     return 0.0004
-
+#建立模型
 def build_model():
+    #使用kersa的顺序序列模型
   model = Sequential()
-
+#向模型添加模块
   model.add(Conv2D(192, (5, 5), padding='same', kernel_regularizer=keras.regularizers.l2(weight_decay), input_shape=x_train.shape[1:]))
   model.add(BatchNormalization())
   model.add(Activation('relu'))
@@ -87,17 +88,19 @@ def build_model():
   model.add(Activation('relu'))
   
   model.add(GlobalAveragePooling2D())
+    #使用softmax分类函数
   model.add(Activation('softmax'))
-  
+  #优化器用sgd带动量的
   sgd = optimizers.SGD(lr=.1, momentum=0.9, nesterov=True)
+    #模型编译
   model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
   return model
-
+#定义主函数
 if __name__ == '__main__':
 
-    # load data
+    # load data 导入数据
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_train = keras.utils.to_categorical(y_train, num_classes) #类别编号
     y_test = keras.utils.to_categorical(y_test, num_classes)
     
     x_train, x_test = color_preprocessing(x_train, x_test)
@@ -111,11 +114,11 @@ if __name__ == '__main__':
     change_lr = LearningRateScheduler(scheduler)
     cbks = [change_lr,tb_cb]
 
-    # set data augmentation
+    # set data augmentation 使用数据增强
     print('Using real-time data augmentation.')
     datagen = ImageDataGenerator(horizontal_flip=True,width_shift_range=0.125,height_shift_range=0.125,fill_mode='constant',cval=0.)
-    datagen.fit(x_train)
+    datagen.fit(x_train)  #拟合数据
 
-    # start training
+    # start training  训练开始
     model.fit_generator(datagen.flow(x_train, y_train,batch_size=batch_size),steps_per_epoch=iterations,epochs=epochs,callbacks=cbks,validation_data=(x_test, y_test))
     model.save('nin_bn.h5')

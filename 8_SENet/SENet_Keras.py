@@ -46,22 +46,22 @@ def scheduler(epoch):
 
 def resnext(img_input,classes_num):
     global inplanes
-    def add_common_layer(x):
+    def add_common_layer(x): #定义一个bn+relu层
         x = BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
         x = Activation('relu')(x)
         return x
 
-    def group_conv(x,planes,stride):
-        h = planes // cardinality
+    def group_conv(x,planes,stride):#定义一个resnext的groupconv卷积层，planes是filter总宽度，
+        h = planes // cardinality  #h是group层的filter个数，每个group组中单元的宽度
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:,:,:, i * h : i * h + h])(x)
             groups.append(Conv2D(h,kernel_size=(3,3),strides=stride,kernel_initializer=he_normal(),kernel_regularizer=regularizers.l2(weight_decay),padding='same',use_bias=False)(group))
-        x = concatenate(groups)
+        x = concatenate(groups)  #将各groups成员聚合
         return x
 
-    def residual_block(x,planes,stride=(1,1)):
-
+    def residual_block(x,planes,stride=(1,1)):  #定义residual块
+        #    floor函数  This is the largest integer <= x.
         D = int(math.floor(planes * (base_width/64.0)))
         C = cardinality
 
@@ -93,7 +93,7 @@ def resnext(img_input,classes_num):
             x = residual_block(x,planes)
         return x
 
-    def squeeze_excite_block(input, ratio=16):
+    def squeeze_excite_block(input, ratio=16):  #ratio 是比例因子用来降低fc层的连接数，减少参数
         init = input
         channel_axis = 1 if K.image_data_format() == "channels_first" else -1  # compute channel axis
         filters = init._keras_shape[channel_axis]  # infer input number of filters

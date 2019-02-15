@@ -12,7 +12,7 @@ from keras.models import Model
 from keras import optimizers, regularizers
 
 growth_rate        = 12 
-depth              = 100
+depth              = 20
 compression        = 0.5
 
 img_rows, img_cols = 32, 32
@@ -41,8 +41,9 @@ def scheduler(epoch):
         return 0.01
     return 0.001
 
-def densenet(img_input,classes_num):
-    def conv(x, out_filters, k_size):
+def densenet(img_input,classes_num):   #输入图片和类别
+    def conv(x, out_filters, k_size):  #定义卷积函数（Conv2D（默认stride=1，dialation=1））
+        #conv返回一个和输入一样的大小，改变其中filter也就是channe的数量
         return Conv2D(filters=out_filters,
                       kernel_size=k_size,
                       strides=(1,1),
@@ -52,50 +53,54 @@ def densenet(img_input,classes_num):
                       use_bias=False)(x)
 
     def dense_layer(x):
+        #对输入的x执行softmax全链接，输出10个
         return Dense(units=classes_num,
                      activation='softmax',
                      kernel_initializer='he_normal',
                      kernel_regularizer=regularizers.l2(weight_decay))(x)
 
     def bn_relu(x):
+        #批归一化+激活
         x = BatchNormalization(momentum=0.9, epsilon=1e-5)(x)
         x = Activation('relu')(x)
         return x
 
     def bottleneck(x):
+        #定义一个瓶颈网络
         channels = growth_rate * 4
         x = bn_relu(x)
-        x = conv(x, channels, (1,1))
+        x = conv(x, channels, (1,1)) #x通过1x1网络channel变多
         x = bn_relu(x)
-        x = conv(x, growth_rate, (3,3))
+        x = conv(x, growth_rate, (3,3))#3*3网络，变回原channel
         return x
 
     def single(x):
+        #x经过3*3卷积，输出原尺寸大小
         x = bn_relu(x)
         x = conv(x, growth_rate, (3,3))
         return x
 
     def transition(x, inchannels):
-        outchannels = int(inchannels * compression)
+        outchannels = int(inchannels * compression)   #compression=0.5
         x = bn_relu(x)
-        x = conv(x, outchannels, (1,1))
-        x = AveragePooling2D((2,2), strides=(2, 2))(x)
+        x = conv(x, outchannels, (1,1))   #x输出变成inchannel的一半
+        x = AveragePooling2D((2,2), strides=(2, 2))(x)  #池化（output-2+1）/2
         return x, outchannels
 
     def dense_block(x,blocks,nchannels):
         concat = x
         for i in range(blocks):
             x = bottleneck(concat)
-            concat = concatenate([x,concat], axis=-1)
-            nchannels += growth_rate
+            concat = concatenate([x,concat], axis=-1)   #在channel那个维度相加
+            nchannels += growth_rate #nchannel是bottleneck叠加的次数*growth_rate
         return concat, nchannels
 
 
-    nblocks = (depth - 4) // 6 
-    nchannels = growth_rate * 2
+    nblocks = (depth - 4) // 6  #depth=100 可以计算出堆叠个数
+    nchannels = growth_rate * 2  #growth_rate=12
 
 
-    x = conv(img_input, nchannels, (3,3))
+    x = conv(img_input, nchannels, (3,3))  #
     x, nchannels = dense_block(x,nblocks,nchannels)
     x, nchannels = transition(x,nchannels)
     x, nchannels = dense_block(x,nblocks,nchannels)
@@ -122,7 +127,8 @@ if __name__ == '__main__':
         x_test[:,:,:,i] = (x_test[:,:,:,i] - mean[i]) / std[i]
 
     # build network
-    img_input = Input(shape=(img_rows,img_cols,img_channels))
+    img_input = Input(shape=(img_rows,img_cols,img_channels))# input给定输入的shape默认给shape添加batchs，
+    #即返回（batch，）
     output    = densenet(img_input,num_classes)
     model     = Model(img_input, output)
     

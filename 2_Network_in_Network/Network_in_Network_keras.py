@@ -101,6 +101,10 @@ if __name__ == '__main__':
 
     # set data augmentation
     print('Using real-time data augmentation.')
+    #imagedatagenerator()参数说明：
+    #horizontalflip 表示随机水平翻转数据
+    #widthshiftrange 表示 宽度漂移的范围在总宽度的0.125倍之内
+    #fillmode 填充模式选 constant 则后面的cval 就是要填充的常数值
     datagen = ImageDataGenerator(horizontal_flip=True,width_shift_range=0.125,height_shift_range=0.125,fill_mode='constant',cval=0.)
     datagen.fit(x_train)
 

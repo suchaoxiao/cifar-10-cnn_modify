@@ -48,6 +48,3 @@ while True:
 		print('Predicted:', decode_predictions(results, top=5)[0])
 	except Exception as e:
 		pass
-
-
-	

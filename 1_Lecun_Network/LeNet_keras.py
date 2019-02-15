@@ -16,7 +16,7 @@ def build_model():
     model.add(Dense(84, activation = 'relu', kernel_initializer='he_normal'))
     model.add(Dense(10, activation = 'softmax', kernel_initializer='he_normal'))
     sgd = optimizers.SGD(lr=.1, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy',optimizer=sgd,metrics=['accuracy'])
     return model
 
 def scheduler(epoch):
