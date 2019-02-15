@@ -18,7 +18,7 @@ if('tensorflow' == K.backend()):
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-# set parameters via parser
+# set parameters via parser  设置命令行执行时关键字抓取
 parser = argparse.ArgumentParser()
 parser.add_argument('-b','--batch_size', type=int, default=128, metavar='NUMBER',
                 help='batch size(default: 128)')
@@ -40,7 +40,7 @@ batch_size         = args.batch_size
 epochs             = args.epochs
 iterations         = 50000 // batch_size + 1
 weight_decay       = 1e-4
-
+#数据预处理，归一化操作
 def color_preprocessing(x_train,x_test):
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
@@ -59,7 +59,7 @@ def scheduler(epoch):
         return 0.01
     return 0.001
 
-
+#定义residual 网络
 def residual_network(img_input,classes_num=10,stack_n=5):
     
     def residual_block(x,o_filters,increase=False):
@@ -75,6 +75,7 @@ def residual_network(img_input,classes_num=10,stack_n=5):
         conv_2 = Conv2D(o_filters,kernel_size=(3,3),strides=(1,1),padding='same',
                         kernel_initializer="he_normal",
                         kernel_regularizer=regularizers.l2(weight_decay))(o2)
+        #如果需要升维度，就用1*1卷积升维度，因为残差网络会降低网络的空间维度，所以identity做直连的也要降维
         if increase:
             projection = Conv2D(o_filters,kernel_size=(1,1),strides=(2,2),padding='same',
                                 kernel_initializer="he_normal",

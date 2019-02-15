@@ -42,7 +42,7 @@ def scheduler(epoch):
     if epoch < 160:
         return 0.01
     return 0.001
-
+#下载训练号的vgg19的权重
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 filepath = get_file('vgg19_weights_tf_dim_ordering_tf_kernels.h5', WEIGHTS_PATH, cache_subdir='models')
 
@@ -53,7 +53,7 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
 
-# data preprocessing 
+# data preprocessing  数据预处理0中心化
 x_train[:,:,:,0] = (x_train[:,:,:,0]-123.680)
 x_train[:,:,:,1] = (x_train[:,:,:,1]-116.779)
 x_train[:,:,:,2] = (x_train[:,:,:,2]-103.939)
@@ -151,7 +151,7 @@ model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy
 tb_cb = TensorBoard(log_dir=log_filepath, histogram_freq=0)
 change_lr = LearningRateScheduler(scheduler)
 cbks = [change_lr,tb_cb]
-
+#数据增强
 print('Using real-time data augmentation.')
 datagen = ImageDataGenerator(horizontal_flip=True,
         width_shift_range=0.125,height_shift_range=0.125,fill_mode='constant',cval=0.)
