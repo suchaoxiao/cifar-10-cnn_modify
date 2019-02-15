@@ -86,7 +86,7 @@ def densenet(img_input,classes_num):   #输入图片和类别
         x = conv(x, outchannels, (1,1))   #x输出变成inchannel的一半
         x = AveragePooling2D((2,2), strides=(2, 2))(x)  #池化（output-2+1）/2
         return x, outchannels
-
+    #这个densenet有问题，，没有之前所有层都连接到这层，只是前一层连接到本层
     def dense_block(x,blocks,nchannels):
         concat = x
         for i in range(blocks):

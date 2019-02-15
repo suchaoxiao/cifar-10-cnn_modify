@@ -23,7 +23,6 @@ ITERATIONS         = 50000 // BATCH_SIZE + 1
 WEIGHT_DECAY       = 0.0005
 LOG_FILE_PATH      = './w_resnet/'
 
-
 from keras import backend as K
 # set GPU memory 
 if('tensorflow' == K.backend()):
